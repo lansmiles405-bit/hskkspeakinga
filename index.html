@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI HSKK Speaking Coach</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <header class="app-header">
+        <div class="logo">
+            <h1>AI HSKK Speaking Coach</h1>
+            <span class="badge-tag">Pro Version</span>
+        </div>
+        <div class="user-gamification">
+            <span id="streak-display">🔥 0 Ngày</span>
+            <span id="xp-display">⭐ 0 XP</span>
+            <button id="api-key-btn" class="btn-secondary">⚙️ Cấu hình API Key</button>
+        </div>
+    </header>
+
+    <main class="main-container">
+        <!-- Navigation Tabs -->
+        <nav class="mode-tabs">
+            <button class="tab-btn active" data-tab="practice">Chế Độ Luyện Tập</button>
+            <button class="tab-btn" data-tab="exam">Chế Độ Thi Thật</button>
+            <button class="tab-btn" data-tab="dashboard">Dashboard Tiến Độ</button>
+        </nav>
+
+        <!-- Main Workspace -->
+        <div class="workspace">
+            <!-- Left Column: Image & Recording -->
+            <section class="panel left-panel">
+                <div class="image-container">
+                    <img id="preview-image" src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=600&q=80" alt="HSKK Exam Topic">
+                    <div class="image-controls">
+                        <label for="upload-img" class="btn-secondary">📁 Tải Ảnh Lên</label>
+                        <input type="file" id="upload-img" accept="image/*" style="display:none;">
+                        <button id="sample-img-btn" class="btn-secondary">🔄 Đổi Ảnh Mẫu</button>
+                    </div>
+                </div>
+
+                <div class="recorder-section">
+                    <div class="timer-display" id="timer">00:00</div>
+                    <div class="recorder-controls">
+                        <button id="start-rec-btn" class="btn-primary">🎙️ Bắt Đầu Nói</button>
+                        <button id="stop-rec-btn" class="btn-danger" disabled>⏹️ Dừng</button>
+                        <button id="submit-btn" class="btn-success">🚀 Nộp Bài Chấm Điểm</button>
+                    </div>
+                    <div class="transcript-box">
+                        <label for="transcript-input">Transcript (Realtime - Có thể chỉnh sửa):</label>
+                        <textarea id="transcript-input" placeholder="Nội dung nói của bạn sẽ hiển thị ở đây..."></textarea>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Right Column: AI Assistance / Evaluation -->
+            <section class="panel right-panel">
+                <!-- Practice Mode Assistance View -->
+                <div id="practice-assistance" class="assistant-container">
+                    <button id="analyze-img-btn" class="btn-primary full-width">🔍 AI Phân Tích Ảnh & Sinh Gợi Ý</button>
+                    
+                    <div id="analysis-result" class="analysis-box">
+                        <h3>Phân Tích Chi Tiết Ảnh</h3>
+                        <div id="analysis-loading" class="loading-spinner hidden">Đang phân tích ảnh...</div>
+                        <div id="analysis-content">
+                            <p class="placeholder-text">Nhấn "AI Phân Tích Ảnh" để bắt đầu nhận hỗ trợ.</p>
+                        </div>
+                    </div>
+
+                    <div class="template-sentence-box">
+                        <h3>Mẫu Câu Khung Mô Tả Tranh</h3>
+                        <div class="chips-container">
+                            <button class="chip" data-insert="从图片中可以看出，">从图片中可以看出...</button>
+                            <button class="chip" data-insert="图片展示了......的场景。">图片展示了...的场景。</button>
+                            <button class="chip" data-insert="我认为......">我认为...</button>
+                            <button class="chip" data-insert="总的来说，">总的来说...</button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dashboard View (Hidden by default) -->
+                <div id="dashboard-view" class="assistant-container hidden">
+                    <h2>Tiến Độ Luyện Tập</h2>
+                    <div class="chart-container">
+                        <canvas id="progressChart"></canvas>
+                    </div>
+                    <div id="history-list" class="history-container">
+                        <h3>Lịch Sử Bài Thi</h3>
+                        <ul id="history-items"></ul>
+                    </div>
+                </div>
+
+                <!-- Evaluation Output View -->
+                <div id="evaluation-result" class="eval-container hidden">
+                    <h2>Kết Quả Chấm Điểm AI (Mô Phỏng HSKK)</h2>
+                    <div id="overall-score-card" class="score-card">
+                        <div class="main-score" id="total-score">0</div>
+                        <div class="score-meta">
+                            <span id="hsk-fit-level">Trình độ tương đương: HSKK --</span>
+                        </div>
+                    </div>
+                    
+                    <div class="sub-scores-grid" id="sub-scores">
+                        <!-- Score Items Injected via JS -->
+                    </div>
+
+                    <div class="eval-details">
+                        <h3>Phân Tích Sửa Lỗi Chi Tiết</h3>
+                        <div id="colored-corrections" class="colored-box"></div>
+
+                        <h3>Nâng Cấp Bài Nói (Native-like)</h3>
+                        <div id="native-upgrade" class="native-box"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Modal Config API Key -->
+    <div id="api-modal" class="modal hidden">
+        <div class="modal-content">
+            <h2>Cấu Hình Google Gemini API Key</h2>
+            <p>API Key được lưu trữ trực tiếp trên trình duyệt của bạn (IndexedDB).</p>
+            <input type="password" id="api-key-input" placeholder="AIzaSy...">
+            <div class="modal-actions">
+                <button id="save-api-key" class="btn-primary">Lưu Key</button>
+                <button id="close-api-modal" class="btn-secondary">Đóng</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="js/db.js"></script>
+    <script src="js/speech.js"></script>
+    <script src="js/ai-engine.js"></script>
+    <script src="js/dashboard.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>
