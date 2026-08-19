@@ -160,14 +160,23 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     // Utility Base64 Image Converter
-    function getBase64Image(imgEl) {
-        return new Promise((resolve) => {
+function getBase64Image(imgEl) {
+    return new Promise((resolve, reject) => {
+        const img = new Image();
+        // Bắt buộc trình duyệt yêu cầu quyền CORS khi tải ảnh
+        img.crossOrigin = "anonymous"; 
+        img.src = imgEl.src;
+
+        img.onload = () => {
             const canvas = document.createElement("canvas");
-            canvas.width = imgEl.naturalWidth || imgEl.width;
-            canvas.height = imgEl.naturalHeight || imgEl.height;
+            canvas.width = img.naturalWidth || img.width;
+            canvas.height = img.naturalHeight || img.height;
             const ctx = canvas.getContext("2d");
-            ctx.drawImage(imgEl, 0, 0);
+            ctx.drawImage(img, 0, 0);
             resolve(canvas.toDataURL("image/jpeg"));
-        });
-    }
+        };
+
+        img.onerror = (err) => reject(new Error("Không thể chuyển đổi ảnh: " + err));
+    });
+}
 });
