@@ -5,136 +5,203 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI HSKK Speaking Coach</title>
     <link rel="stylesheet" href="css/styles.css">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <header class="app-header">
-        <div class="logo">
-            <h1>AI HSKK Speaking Coach</h1>
-            <span class="badge-tag">Pro Version</span>
+    <!-- Floating Sidebar Mic -->
+    <div class="floating-sidebar">
+        <div class="mic-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a3 3 0 0 0-3 3v7a3 3 0 0 0 6 0V5a3 3 0 0 0-3-3z"></path><path d="M19 10v2a7 7 0 0 1-14 0v-2"></path><line x1="12" y1="19" x2="12" y2="22"></line></svg>
         </div>
-        <div class="user-gamification">
-            <span id="streak-display">🔥 0 Ngày</span>
-            <span id="xp-display">⭐ 0 XP</span>
-            <button id="api-key-btn" class="btn-secondary">⚙️ Cấu hình API Key</button>
+        <div class="sidebar-text">Chuẩn: 10s<br>Ghi âm: 60s</div>
+    </div>
+
+    <!-- Top Navigation -->
+    <header class="top-nav">
+        <div class="nav-left">
+            <div class="logo-circle">AI</div>
+            <h1 class="logo-text">AI HSKK Speaking Coach</h1>
+        </div>
+        <div class="nav-center">
+            <div class="segmented-control">
+                <button class="active">Luyện tập</button>
+                <button class="inactive">Thực hành thi</button>
+            </div>
+        </div>
+        <div class="nav-right">
+            <div class="profile-circle">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+            </div>
         </div>
     </header>
 
-    <main class="main-container">
-        <!-- Navigation Tabs -->
-        <nav class="mode-tabs">
-            <button class="tab-btn active" data-tab="practice">Chế Độ Luyện Tập</button>
-            <button class="tab-btn" data-tab="exam">Chế Độ Thi Thật</button>
-            <button class="tab-btn" data-tab="dashboard">Dashboard Tiến Độ</button>
-        </nav>
-
-        <!-- Main Workspace -->
-        <div class="workspace">
-            <!-- Left Column: Image & Recording -->
-            <section class="panel left-panel">
-                <div class="image-container">
-                    <img id="preview-image" src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=600&q=80" alt="HSKK Exam Topic">
-                    <div class="image-controls">
-                        <label for="upload-img" class="btn-secondary">📁 Tải Ảnh Lên</label>
-                        <input type="file" id="upload-img" accept="image/*" style="display:none;">
-                        <button id="sample-img-btn" class="btn-secondary">🔄 Đổi Ảnh Mẫu</button>
+    <!-- Main Workspace -->
+    <main class="dashboard-grid">
+        
+        <!-- COLUMN 1: Image & Transcript -->
+        <section class="col-main">
+            <div class="main-card">
+                <div class="card-header">
+                    <h2>HSKK Trung cấp: Mô tả Tranh.</h2>
+                    <div class="timers">
+                        <span class="timer-label">Countdown chuẩn: <strong>10s</strong></span>
+                        <span class="timer-badge">60s</span>
                     </div>
                 </div>
-
-                <div class="recorder-section">
-                    <div class="timer-display" id="timer">00:00</div>
-                    <div class="recorder-controls">
-                        <button id="start-rec-btn" class="btn-primary">🎙️ Bắt Đầu Nói</button>
-                        <button id="stop-rec-btn" class="btn-danger" disabled>⏹️ Dừng</button>
-                        <button id="submit-btn" class="btn-success">🚀 Nộp Bài Chấm Điểm</button>
-                    </div>
-                    <div class="transcript-box">
-                        <label for="transcript-input">Transcript (Realtime - Có thể chỉnh sửa):</label>
-                        <textarea id="transcript-input" placeholder="Nội dung nói của bạn sẽ hiển thị ở đây..."></textarea>
-                    </div>
-                </div>
-            </section>
-
-            <!-- Right Column: AI Assistance / Evaluation -->
-            <section class="panel right-panel">
-                <!-- Practice Mode Assistance View -->
-                <div id="practice-assistance" class="assistant-container">
-                    <button id="analyze-img-btn" class="btn-primary full-width">🔍 AI Phân Tích Ảnh & Sinh Gợi Ý</button>
-                    
-                    <div id="analysis-result" class="analysis-box">
-                        <h3>Phân Tích Chi Tiết Ảnh</h3>
-                        <div id="analysis-loading" class="loading-spinner hidden">Đang phân tích ảnh...</div>
-                        <div id="analysis-content">
-                            <p class="placeholder-text">Nhấn "AI Phân Tích Ảnh" để bắt đầu nhận hỗ trợ.</p>
-                        </div>
-                    </div>
-
-                    <div class="template-sentence-box">
-                        <h3>Mẫu Câu Khung Mô Tả Tranh</h3>
-                        <div class="chips-container">
-                            <button class="chip" data-insert="从图片中可以看出，">从图片中可以看出...</button>
-                            <button class="chip" data-insert="图片展示了......的场景。">图片展示了...的场景。</button>
-                            <button class="chip" data-insert="我认为......">我认为...</button>
-                            <button class="chip" data-insert="总的来说，">总的来说...</button>
-                        </div>
-                    </div>
+                
+                <div class="image-wrapper">
+                    <img src="https://images.unsplash.com/photo-1521587760476-6c12a4b040da?auto=format&fit=crop&w=800&q=80" alt="Library Bookshelf">
                 </div>
 
-                <!-- Dashboard View (Hidden by default) -->
-                <div id="dashboard-view" class="assistant-container hidden">
-                    <h2>Tiến Độ Luyện Tập</h2>
-                    <div class="chart-container">
-                        <canvas id="progressChart"></canvas>
-                    </div>
-                    <div id="history-list" class="history-container">
-                        <h3>Lịch Sử Bài Thi</h3>
-                        <ul id="history-items"></ul>
-                    </div>
-                </div>
-
-                <!-- Evaluation Output View -->
-                <div id="evaluation-result" class="eval-container hidden">
-                    <h2>Kết Quả Chấm Điểm AI (Mô Phỏng HSKK)</h2>
-                    <div id="overall-score-card" class="score-card">
-                        <div class="main-score" id="total-score">0</div>
-                        <div class="score-meta">
-                            <span id="hsk-fit-level">Trình độ tương đương: HSKK --</span>
+                <div class="transcript-box">
+                    <div class="transcript-header">
+                        <h3>Real-time transcript:</h3>
+                        <div class="transcript-actions">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path><polyline points="15 3 21 3 21 9"></polyline><line x1="10" y1="14" x2="21" y2="3"></line></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M19.07 4.93a10 10 0 0 1 0 14.14M15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </div>
                     </div>
                     
-                    <div class="sub-scores-grid" id="sub-scores">
-                        <!-- Score Items Injected via JS -->
+                    <div class="transcript-content">
+                        <div class="line">
+                            <span class="status-icon correct">✅</span>
+                            <span class="correct-text">
+                                <ruby>从<rt>cóng</rt></ruby><ruby>图<rt>tú</rt></ruby><ruby>片<rt>piàn</rt></ruby><ruby>中<rt>zhōng</rt></ruby><ruby>可<rt>kě</rt></ruby><ruby>以<rt>yǐ</rt></ruby><ruby>看<rt>kàn</rt></ruby><ruby>出<rt>chū</rt></ruby>，
+                                <ruby>图<rt>tú</rt></ruby><ruby>片<rt>piàn</rt></ruby><ruby>里<rt>lǐ</rt></ruby><ruby>有<rt>yǒu</rt></ruby><ruby>很<rt>hěn</rt></ruby><ruby>多<rt>duō</rt></ruby><ruby>书<rt>shū</rt></ruby>。
+                            </span>
+                            <span class="error-text">
+                                <ruby>他<rt>tā</rt></ruby><ruby>看<rt>kàn</rt></ruby><ruby>起<rt>qǐ</rt></ruby><ruby>来<rt>lái</rt></ruby><ruby>非<rt>fēi</rt></ruby><ruby>常<rt>cháng</rt></ruby><ruby>认<rt>rèn</rt></ruby><ruby>真<rt>zhēn</rt></ruby><ruby>地<rt>de</rt></ruby>。
+                            </span>
+                        </div>
                     </div>
-
-                    <div class="eval-details">
-                        <h3>Phân Tích Sửa Lỗi Chi Tiết</h3>
-                        <div id="colored-corrections" class="colored-box"></div>
-
-                        <h3>Nâng Cấp Bài Nói (Native-like)</h3>
-                        <div id="native-upgrade" class="native-box"></div>
+                    
+                    <div class="correction-section">
+                        <h3>AI correction suggestions:</h3>
+                        <div class="line">
+                            <span class="status-icon correct">✅</span>
+                            <span class="correct-bg">他学习得很认真。</span>
+                            <span class="status-icon correct">✅</span>
+                            <span class="hint-text">(based on user example)</span>
+                        </div>
                     </div>
                 </div>
-            </section>
-        </div>
-    </main>
-
-    <!-- Modal Config API Key -->
-    <div id="api-modal" class="modal hidden">
-        <div class="modal-content">
-            <h2>Cấu Hình Google Gemini API Key</h2>
-            <p>API Key được lưu trữ trực tiếp trên trình duyệt của bạn (IndexedDB).</p>
-            <input type="password" id="api-key-input" placeholder="AIzaSy...">
-            <div class="modal-actions">
-                <button id="save-api-key" class="btn-primary">Lưu Key</button>
-                <button id="close-api-modal" class="btn-secondary">Đóng</button>
             </div>
-        </div>
-    </div>
+        </section>
 
-    <script src="js/db.js"></script>
-    <script src="js/speech.js"></script>
-    <script src="js/ai-engine.js"></script>
-    <script src="js/dashboard.js"></script>
-    <script src="js/app.js"></script>
+        <!-- COLUMN 2: AI Coach Analysis -->
+        <section class="col-middle">
+            <div class="section-header">
+                <h2>AI Coach Analysis</h2>
+                <div class="icons">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title-row">
+                    <h3>HSKK Examiner Analysis:</h3>
+                    <div class="icons">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path><line x1="1" y1="1" x2="23" y2="23"></line></svg>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                    </div>
+                </div>
+                <ul class="analysis-list">
+                    <li>人物: [Trống]</li>
+                    <li>地点: 图书馆</li>
+                    <li>动作: [Trống]</li>
+                    <li>物品: 书架、书、本子、电脑</li>
+                    <li>场景: [Trống]</li>
+                    <li>场景: 准备考试</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <h3>Vocabulary Suggestions</h3>
+                <div class="tabs-small">
+                    <button class="inactive">Beginner</button>
+                    <button class="active">HSKK Trung cấp</button>
+                    <button class="inactive">Advanced</button>
+                </div>
+                <div class="vocab-list">
+                    <div class="vocab-item">复习</div>
+                    <div class="vocab-item">认真学习</div>
+                    <div class="vocab-item">准备考试</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3>Sample Sentence Prompts</h3>
+                <div class="dropdown">
+                    <span>HSKK Intermediate (Level 2)</span>
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 12 15 18 9"></polyline></svg>
+                </div>
+                <ul class="sentence-list">
+                    <li>
+                        这个学生正在为考试做准备。<br>
+                        <span class="text-muted">(Example: 他看起来非常认真.)</span>
+                    </li>
+                </ul>
+            </div>
+        </section>
+
+        <!-- COLUMN 3: Progress & Formulas -->
+        <section class="col-right">
+            <div class="card">
+                <h3>Study Progress</h3>
+                <div class="chart-placeholder">
+                    <!-- SVG Chart that matches the image -->
+                    <svg viewBox="0 0 300 150" width="100%" height="auto">
+                        <line x1="30" y1="120" x2="290" y2="120" stroke="#e5e7eb" stroke-width="1"></line>
+                        <line x1="30" y1="90" x2="290" y2="90" stroke="#e5e7eb" stroke-width="1"></line>
+                        <line x1="30" y1="60" x2="290" y2="60" stroke="#e5e7eb" stroke-width="1"></line>
+                        <line x1="30" y1="30" x2="290" y2="30" stroke="#e5e7eb" stroke-width="1"></line>
+                        <polyline fill="none" stroke="#3b82f6" stroke-width="2" points="40,90 80,60 120,40 160,35 200,45 240,40 280,20"></polyline>
+                        <circle cx="40" cy="90" r="3" fill="#3b82f6"></circle>
+                        <circle cx="80" cy="60" r="3" fill="#3b82f6"></circle>
+                        <circle cx="120" cy="40" r="3" fill="#3b82f6"></circle>
+                        <circle cx="160" cy="35" r="3" fill="#3b82f6"></circle>
+                        <circle cx="200" cy="45" r="3" fill="#3b82f6"></circle>
+                        <circle cx="240" cy="40" r="3" fill="#3b82f6"></circle>
+                        <circle cx="280" cy="20" r="3" fill="#3b82f6"></circle>
+                        
+                        <!-- Y-axis text -->
+                        <text x="15" y="123" font-size="10" fill="#6b7280">1</text>
+                        <text x="15" y="93" font-size="10" fill="#6b7280">2</text>
+                        <text x="15" y="63" font-size="10" fill="#6b7280">4</text>
+                        <text x="15" y="33" font-size="10" fill="#6b7280">6</text>
+                        <text x="15" y="10" font-size="10" fill="#6b7280">1-6</text>
+                        
+                        <!-- X-axis text -->
+                        <text x="37" y="140" font-size="10" fill="#6b7280">1</text>
+                        <text x="77" y="140" font-size="10" fill="#6b7280">2</text>
+                        <text x="117" y="140" font-size="10" fill="#6b7280">3</text>
+                        <text x="157" y="140" font-size="10" fill="#6b7280">4</text>
+                        <text x="197" y="140" font-size="10" fill="#6b7280">5</text>
+                        <text x="237" y="140" font-size="10" fill="#6b7280">1-6</text>
+                    </svg>
+                </div>
+                <div class="progress-stats">
+                    <p>Current streak: 7 天</p>
+                    <p>Target: Intermediate Level Achievement</p>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-title-row">
+                    <h3>Describing formulas</h3>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                </div>
+                <div class="formulas-grid">
+                    <button class="formula-chip">从图片中可以看出</button>
+                    <button class="formula-chip">图片中有......</button>
+                    <button class="formula-chip">我认为......</button>
+                    <button class="formula-chip">Possible...... (Perhaps......)</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
 </body>
 </html>
