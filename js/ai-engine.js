@@ -62,7 +62,7 @@ Trả về dữ liệu JSON theo cấu trúc chính xác:
         const apiKey = await this.getApiKey();
         if (!apiKey) throw new Error('Chưa cấu hình API Key!');
 
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
         const prompt = `Đóng vai giám khảo HSKK chuyên nghiệp. Chấm điểm bài nói mô tả tranh dựa trên transcript và ảnh.
 Transcript người học: "${transcript}"
