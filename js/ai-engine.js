@@ -14,7 +14,7 @@ class AIEngine {
         const apiKey = await this.getApiKey();
         if (!apiKey) throw new Error('Chưa cấu hình Gemini API Key!');
 
-        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
+        const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-3-flash-preview:generateContent?key=${apiKey}`;
 
         const prompt = `Bạn là giám khảo HSKK. Hãy phân tích hình ảnh này để hỗ trợ người học luyện nói.
 Trả về dữ liệu JSON theo cấu trúc chính xác:
