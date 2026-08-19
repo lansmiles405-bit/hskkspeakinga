@@ -1,25 +1,23 @@
-/**
- * Controller chính kết nối toàn bộ hệ thống
- */
 document.addEventListener('DOMContentLoaded', async () => {
     await db.init();
     
+    // Khởi tạo ghi âm giọng nói
     const speech = new SpeechModule((text) => {
-        document.getElementById('transcript-input').value = text;
+        const input = document.getElementById('transcript-input');
+        if (input) input.value = text;
     });
     
     const ai = new AIEngine(db);
-    const dashboard = new DashboardModule(db);
 
     let currentMode = 'practice';
     let timerInterval = null;
     let secondsLeft = 0;
 
-    // API Key Modal Controls
+    // Modal API Key
     const modal = document.getElementById('api-modal');
-    document.getElementById('api-key-btn').addEventListener('click', () => modal.classList.remove('hidden'));
-    document.getElementById('close-api-modal').addEventListener('click', () => modal.classList.add('hidden'));
-    document.getElementById('save-api-key').addEventListener('click', async () => {
+    document.getElementById('api-key-btn')?.addEventListener('click', () => modal.classList.remove('hidden'));
+    document.getElementById('close-api-modal')?.addEventListener('click', () => modal.classList.add('hidden'));
+    document.getElementById('save-api-key')?.addEventListener('click', async () => {
         const val = document.getElementById('api-key-input').value;
         if (val) {
             await db.setSetting('gemini_api_key', val);
@@ -28,155 +26,120 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
     });
 
-    // Navigation Tabs
+    // Chuyển Tab Mode
     document.querySelectorAll('.tab-btn').forEach(btn => {
         btn.addEventListener('click', (e) => {
             document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
             e.target.classList.add('active');
             currentMode = e.target.dataset.tab;
-
-            if (currentMode === 'dashboard') {
-                document.getElementById('practice-assistance').classList.add('hidden');
-                document.getElementById('evaluation-result').classList.add('hidden');
-                document.getElementById('dashboard-view').classList.remove('hidden');
-                dashboard.render();
-            } else {
-                document.getElementById('dashboard-view').classList.add('hidden');
-                if (currentMode === 'exam') {
-                    document.getElementById('practice-assistance').classList.add('hidden');
-                } else {
-                    document.getElementById('practice-assistance').classList.remove('hidden');
-                }
-            }
         });
     });
 
-    // Recording Controls
+    // Nút Ghi âm
     const startBtn = document.getElementById('start-rec-btn');
     const stopBtn = document.getElementById('stop-rec-btn');
     
-    startBtn.addEventListener('click', () => {
+    startBtn?.addEventListener('click', () => {
         speech.start();
-        startBtn.disabled = true;
-        stopBtn.disabled = false;
+        if (stopBtn) stopBtn.style.display = 'block';
         
         secondsLeft = currentMode === 'exam' ? 60 : 120;
-        document.getElementById('timer').innerText = `00:${secondsLeft}`;
+        const timerEl = document.getElementById('timer');
+        if (timerEl) timerEl.innerText = `${secondsLeft}s`;
         
+        clearInterval(timerInterval);
         timerInterval = setInterval(() => {
             secondsLeft--;
-            document.getElementById('timer').innerText = `00:${secondsLeft < 10 ? '0' : ''}${secondsLeft}`;
+            if (timerEl) timerEl.innerText = `${secondsLeft}s`;
             if (secondsLeft <= 0) {
                 clearInterval(timerInterval);
-                stopBtn.click();
+                stopBtn?.click();
             }
         }, 1000);
     });
 
-    stopBtn.addEventListener('click', () => {
+    stopBtn?.addEventListener('click', () => {
         speech.stop();
         clearInterval(timerInterval);
-        startBtn.disabled = false;
-        stopBtn.disabled = true;
+        if (stopBtn) stopBtn.style.display = 'none';
     });
 
-    // Image Prompt Inserter
-    document.querySelectorAll('.chip').forEach(chip => {
+    // Chèn mẫu câu nhanh
+    document.querySelectorAll('.formula-chip').forEach(chip => {
         chip.addEventListener('click', () => {
             const input = document.getElementById('transcript-input');
-            input.value += chip.dataset.insert;
+            if (input && chip.dataset.insert) {
+                input.value += chip.dataset.insert;
+            }
         });
     });
 
-    // Vision Analysis
-    document.getElementById('analyze-img-btn').addEventListener('click', async () => {
-        const loading = document.getElementById('analysis-loading');
+    // Phân tích hình ảnh Gemini
+    document.getElementById('analyze-img-btn')?.addEventListener('click', async () => {
         const content = document.getElementById('analysis-content');
-        loading.classList.remove('hidden');
-        content.innerHTML = '';
+        if (content) content.innerHTML = '<p>🔄 Đang phân tích hình ảnh bằng AI...</p>';
 
         try {
-            const imgData = await getBase64Image(document.getElementById('preview-image'));
+            const imgEl = document.getElementById('preview-image');
+            const imgData = await getBase64Image(imgEl);
             const res = await ai.analyzeImage(imgData);
 
-            loading.classList.add('hidden');
             content.innerHTML = `
-                <p><strong>Đối tượng:</strong> ${res.analysis.people}</p>
-                <p><strong>Hành động:</strong> ${res.analysis.action}</p>
-                <p><strong>Địa điểm:</strong> ${res.analysis.location}</p>
-                <hr>
-                <h4>Từ vựng gợi ý:</h4>
-                <p><strong>HSKK Trung cấp:</strong> ${res.vocabulary.intermediate.join(', ')}</p>
-                <p><strong>HSKK Cao cấp:</strong> ${res.vocabulary.advanced.join(', ')}</p>
+                <ul class="analysis-list">
+                    <li><b>人物:</b> ${res.analysis.people || 'Trống'}</li>
+                    <li><b>地点:</b> ${res.analysis.location || 'Trống'}</li>
+                    <li><b>动作:</b> ${res.analysis.action || 'Trống'}</li>
+                    <li><b>物品:</b> ${res.analysis.objects || 'Trống'}</li>
+                    <li><b>场景:</b> ${res.analysis.context || 'Trống'}</li>
+                </ul>
             `;
         } catch (err) {
-            loading.classList.add('hidden');
-            alert('Lỗi phân tích: ' + err.message);
+            if (content) content.innerHTML = `<p style="color:red;">Lỗi phân tích: ${err.message}</p>`;
         }
     });
 
-    // Submit & AI Evaluate
-    document.getElementById('submit-btn').addEventListener('click', async () => {
+    // Chấm điểm bài nói
+    document.getElementById('submit-btn')?.addEventListener('click', async () => {
         const transcript = document.getElementById('transcript-input').value;
+        const output = document.getElementById('evaluation-output');
+
         if (!transcript) return alert('Vui lòng nói hoặc nhập transcript!');
+        if (output) output.innerHTML = '⏳ AI đang chấm điểm bài nói của bạn...';
 
-        const imgData = await getBase64Image(document.getElementById('preview-image'));
-        
         try {
+            const imgEl = document.getElementById('preview-image');
+            const imgData = await getBase64Image(imgEl);
             const res = await ai.evaluateSpeaking(transcript, imgData);
-            
-            // Save to DB
-            await db.saveEvaluation({
-                timestamp: Date.now(),
-                mode: currentMode,
-                transcript,
-                scores: res.scores,
-                hskLevelFit: res.hskLevelFit
-            });
 
-            // Display Results
-            document.getElementById('practice-assistance').classList.add('hidden');
-            document.getElementById('evaluation-result').classList.remove('hidden');
-
-            document.getElementById('total-score').innerText = res.scores.overall;
-            document.getElementById('hsk-fit-level').innerText = `Trình độ tương đương: ${res.hskLevelFit}`;
-
-            const subScoresContainer = document.getElementById('sub-scores');
-            subScoresContainer.innerHTML = Object.entries(res.scores)
-                .filter(([k]) => k !== 'overall')
-                .map(([key, score]) => `<div class="score-item"><span>${key.toUpperCase()}</span><strong>${score}</strong></div>`)
-                .join('');
-
-            const coloredContainer = document.getElementById('colored-corrections');
-            coloredContainer.innerHTML = res.coloredCorrections.map(c => 
-                `<mark class="${c.type}">${c.text}</mark> ${c.suggestion ? `(Gợi ý: ${c.suggestion})` : ''}<br>`
-            ).join('');
-
-            document.getElementById('native-upgrade').innerText = res.nativeVersion;
-
+            if (output) {
+                output.innerHTML = `
+                    <p>🎯 <strong>Điểm tổng: ${res.scores.overall}/100</strong> (${res.hskLevelFit})</p>
+                    <p>💡 <strong>Gợi ý sửa lỗi:</strong></p>
+                    <div>${res.coloredCorrections.map(c => `<mark style="padding:2px 4px; border-radius:4px;">${c.text}</mark> ${c.suggestion ? `👉 <em>${c.suggestion}</em>` : ''}`).join('<br>')}</div>
+                    <p style="margin-top:8px;">🌟 <strong>Câu chuẩn bản ngữ:</strong> ${res.nativeVersion}</p>
+                `;
+            }
         } catch (err) {
-            alert('Lỗi chấm điểm: ' + err.message);
+            if (output) output.innerHTML = `<p style="color:red;">Lỗi chấm điểm: ${err.message}</p>`;
         }
     });
 
-    // Utility Base64 Image Converter
-function getBase64Image(imgEl) {
-    return new Promise((resolve, reject) => {
-        const img = new Image();
-        // Bắt buộc trình duyệt yêu cầu quyền CORS khi tải ảnh
-        img.crossOrigin = "anonymous"; 
-        img.src = imgEl.src;
+    // Hàm chuyển Ảnh sang Base64
+    function getBase64Image(imgEl) {
+        return new Promise((resolve, reject) => {
+            const img = new Image();
+            img.crossOrigin = "anonymous";
+            img.src = imgEl.src;
 
-        img.onload = () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = img.naturalWidth || img.width;
-            canvas.height = img.naturalHeight || img.height;
-            const ctx = canvas.getContext("2d");
-            ctx.drawImage(img, 0, 0);
-            resolve(canvas.toDataURL("image/jpeg"));
-        };
-
-        img.onerror = (err) => reject(new Error("Không thể chuyển đổi ảnh: " + err));
-    });
-}
+            img.onload = () => {
+                const canvas = document.createElement("canvas");
+                canvas.width = img.naturalWidth || img.width;
+                canvas.height = img.naturalHeight || img.height;
+                const ctx = canvas.getContext("2d");
+                ctx.drawImage(img, 0, 0);
+                resolve(canvas.toDataURL("image/jpeg"));
+            };
+            img.onerror = (err) => reject(new Error("Không thể tải ảnh để phân tích: " + err));
+        });
+    }
 });
